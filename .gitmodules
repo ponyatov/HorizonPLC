@@ -1,0 +1,4 @@
+[submodule "Espruino"]
+	path = Espruino
+	url = https://github.com/ponyatov/Espruino.git
+	branch = horizon
