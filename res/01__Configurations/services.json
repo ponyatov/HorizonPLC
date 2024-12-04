@@ -1,0 +1,122 @@
+{
+    "Logger" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 10,
+        "AdvancedOptions" : {
+            "server" : "192.168.50.251",
+            "port" : 5142
+        },
+        "Dependency" : ["plcLogger.min.js"],
+        "Description" : "Logger desription"
+    },
+    "Repl" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 5,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcRouteREPL.min.js"],
+        "Description" : "Repl desription"
+    },
+    "ClassAppError" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 20,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcAppError.min.js"],
+        "Description" : "AppError desription"
+    },
+    "ClassAppMath" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 30,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcAppMath.min.js"],
+        "Description" : "AppMath desription"
+    },
+    "I2Cbus" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 40,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcI2CBus.min.js"],
+        "Description" : "I2CBus manager desription"
+    },
+    "SPIbus" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 50,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcSPIBus.min.js"],
+        "Description" : "SPIbus manager desription"
+    },
+    "UARTbus" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 60,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcUARTBus.min.js"],
+        "Description" : "UARTbus manager desription"
+    },
+    "DeviceManager" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 70,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcDeviceManager.min.js"],
+        "Description" : "DeviceManager desription"
+    },
+    "Network" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Primary",
+        "InitOrder" : 80,
+        "AdvancedOptions" : { },
+        "Dependency" : ["plcNetwork.min.js"],
+        "Description" : "Network desription"
+    },
+    "MDNS" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Auxilary",
+        "InitOrder" : 1000,
+        "AdvancedOptions" : {
+            "serviceType": "iot",
+            "port": 80
+        },
+        "Dependency" : ["plcMDNS.min.js"],
+        "Description" : "MDNS desription"
+    },
+    "NTP" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Auxilary",
+        "InitOrder" : 1100,
+        "AdvancedOptions" : {
+            "host": "192.168.50.251",
+            "port": 123,
+            "tz": "+4"
+        },
+        "Dependency" : ["plcNTP.min.js"],
+        "Description" : "NTP desription"
+    },
+    "WSServer" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Auxilary",
+        "InitOrder" : 1200,
+        "AdvancedOptions" : {
+            "port": 8080
+        },
+        "Dependency" : ["plcWSServer.min.js"],
+        "Description" : "WSServer desription"
+    }
+}

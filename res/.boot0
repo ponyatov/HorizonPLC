@@ -1,0 +1,19 @@
+try {
+    USB.setConsole();
+}
+catch (e) { }
+try {
+    const pins = require('Storage').readJSON('ports.json', true).ports;
+    let p;
+    pins.forEach(pin => {
+        try {
+            p = eval(pin);
+        } catch (e) { }
+        if (p instanceof Pin) {
+            pinMode(p, 'input', true);
+        }
+    });
+}
+catch (e) {
+    console.log(e);
+}

@@ -1,0 +1,5 @@
+{
+    "name" : "plcXX",
+    "application" : "app01",
+    "deviceConf" : "default"
+}
