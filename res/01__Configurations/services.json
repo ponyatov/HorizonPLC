@@ -79,7 +79,9 @@
         "ErrorMsg" : "",
         "Importance" : "Primary",
         "InitOrder" : 80,
-        "AdvancedOptions" : { },
+        "AdvancedOptions" : {
+            "baseModule" : "Esp8266.min.js"
+        },
         "Dependency" : ["plcNetwork.min.js"],
         "Description" : "Network desription"
     },
@@ -114,9 +116,27 @@
         "Importance" : "Auxilary",
         "InitOrder" : 1200,
         "AdvancedOptions" : {
+            "proxyModule" : "plcProxyWS.min.js",
+            "baseModule" : "ws.min.js",
             "port": 8080
         },
         "Dependency" : ["plcWSServer.min.js"],
         "Description" : "WSServer desription"
+    },
+    "MQTT" : {
+        "Status" : "stopped",
+        "ErrorMsg" : "",
+        "Importance" : "Auxilary",
+        "InitOrder" : 1300,
+        "AdvancedOptions" : {
+            "proxyModule" : "plcProxyMQTT.min.js",
+            "host": "192.168.50.251",
+            "port": 1883,
+            "username": "operator3",
+            "password": "pwd567",
+            "keep_alive": 120
+        },
+        "Dependency" : ["plcMQTTGW.min.js"],
+        "Description" : "MQTT desription"
     }
 }
