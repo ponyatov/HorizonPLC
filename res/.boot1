@@ -1,0 +1,10 @@
+try {
+	let Utils = new (require('ModuleUtils.min.js'))();
+	if (Utils.CheckEmergencyBtn()) {
+		let Process = new (require("ModuleProcess.min.js"))();
+		Process.Run(Utils);
+	}
+}
+catch (e) {
+	console.log(e);
+}

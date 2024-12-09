@@ -1,0 +1,20 @@
+{
+    "runconf": {
+        "host": "192.168.51.251",
+        "port": 1883,
+        "username": "operator3",
+        "password": "pwd567",
+        "keep_alive": 120,
+        "subs": {
+            "dm": {
+                "sensor": {
+                    "08-0": "/horizon/PLC32-08-0",
+                    "16-0": "/horizon/PLC32-16-0",
+                    "01-0": "/horizon/PLC32-16-0"
+                }, 
+                "actuator": { }
+            }
+        }
+    }
+}
+
