@@ -25,11 +25,12 @@ class ClassProxyMQTT {
         this._MQTT.on('connected',    this.OnConnected.bind(this));
         this._MQTT.on('publish',      this.OnPublish.bind(this));
         this._MQTT.on('disconnected', this.OnDisconnected.bind(this));
+        this._MQTT.on('error', this.OnError.bind(this));
     }
 
     /**
      * @method
-     * @description Обработчик данных, полученных от Sensor Manager 
+     * @description Обработчик данных, полученных от DeviceManager 
      * @param {Object} _msg 
      */
     OnSensorData(_msg) {
@@ -54,13 +55,13 @@ class ClassProxyMQTT {
 
     /**
      * @method
-     * @description Устанавливает обработчик на событие 'disconnected' клиента, который обеспечивает вызов сообщение 'dm-actuator-set' 
+     * @description Устанавливает обработчик на событие 'disconnected' клиента
      */
     OnDisconnected() {
         H.Logger.Service.Log({service: 'MQTT', level: 'I', msg: `MQTT disconnected!`});
         
         let c = 0;
-        /*let interval = setInterval(() => {
+        let interval = setInterval(() => {
             if (this._MQTT.connected) {
                 clearInterval(interval);
                 return;
@@ -72,7 +73,7 @@ class ClassProxyMQTT {
             }
             H.Logger.Service.Log('MQTT', H.Logger.Service.LogLevel.INFO, `MQTT trying to reconnect..`);
             this._MQTT.connect();
-        }, 3000);*/
+        }, 5000);
     }
 
     /**
