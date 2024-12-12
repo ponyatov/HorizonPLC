@@ -23,7 +23,7 @@
 - Регулировка яркости и частоты работы светодиода;
 - Генерация индикационных паттернов и их проигрыш посредством выполнения тасков.
 
-Модуль разработан в соответствии с [архитектурой актуаторов](https://github.com/Konkery/ModuleActuator/blob/main/README.md), соответственно, *ClassLED* наследует и реализует является функционал *ClassActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
+Модуль разработан в соответствии с [архитектурой актуаторов](../../plcActuator/res/README.md), соответственно, *ClassLED* наследует и реализует является функционал *ClassActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
 
 </div>
 
@@ -40,7 +40,7 @@
     "type": "actuator",
     "channelNames": ["lumen"],
     "quantityChannel": 1,
-    "modules": ["ModuleLED.min.js"]
+    "modules": ["plcLED.min.js"]
 }
 ```
 
@@ -64,7 +64,7 @@
 
 ```js
 //Инициализация 
-const led = SensorManager.CreateSensor('led')[0];
+const led = H.DeviceManager.Service.CreateSensor('led')[0];
 // Установка максимальной яркости в 50%
 led.Suppression.SetLim(0, 0.5);
 //Свечение зуммера на 40% яркости с частотой 60% от maxFreq
@@ -87,4 +87,6 @@ setTimeout(() => {
 
 </div>
 
+- <mark style="background-color: lightblue">[plcActuator](../../plcActuator/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
