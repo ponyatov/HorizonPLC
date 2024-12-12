@@ -74,6 +74,18 @@ class ClassBaseSensor {
         if (this._Bus instanceof I2C && typeof +this._Address != 'number')  // если _Bus это I2C шина, то обязан быть передан _Address 
             throw new Error('Address of i2c device is not provided');
     }
+    GetInfo() {
+        return ({ 
+            bus: this._Bus,
+            pins: this._Pins,
+            id: this._Id,
+            article: this._Article,
+            quantityChannel: this._QuantityChannel,
+            name: this._Name,
+            type: this._Type,
+            channelNames: this._ChannelNames
+        });
+    }
 }
 /**
  * @class
@@ -258,7 +270,7 @@ class ClassChannelSensor {
         this._Suppression = new ClassSuppression(opts.suppression);
         this._Filter = new ClassFilter();
         this._Alarms = null;
-        this.AvgCapacity = opts.capacity || 1;
+        this.AvgCapacity = opts.avgCapacity || 1;
         /** ******/
     }
 
@@ -275,6 +287,22 @@ class ClassChannelSensor {
      * Возвращает уникальный идентификатор канала
      */
     get ID() { return `${this._Sensor.ID}-${this._ChNum}`; }
+
+    /**
+     * @getter
+     * Возвращает уникальное имя канала
+     */
+    get Name() {
+        return `${this._Sensor.ID}-${this._ChannelNames[this._ChNum]}`; 
+    }
+
+    /**
+     * @getter
+     * Возвращает имя канала
+     */
+    get ChName() {
+        return this._Sensor._ChannelNames[this._ChNum];
+    }
     
     /**
      * @getter
