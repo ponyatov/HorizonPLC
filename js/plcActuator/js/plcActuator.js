@@ -37,10 +37,10 @@ class ClassBaseActuator {
                 this._SubChannels = _opts.subChannels.map(_subChId => {
                     let dev_id = _subChId.split('-')[0];
                     let chNum  = _subChId.split('-')[1];
-                    return DevicesManager.CreateDevice(dev_id)[chNum];
+                    return H.DeviceManager.Service.CreateDevice(dev_id)[chNum];
                 });
             } catch (e) {
-                H.Logger.Service.Log({ service: this._Id, lvl: 'E', msg: 'Error while parsing subChannels option' });
+                H.Logger.Service.Log({ service: this._Id, level: 'E', msg: 'Error while parsing subChannels option' });
                 throw e;
             }
         }
@@ -204,6 +204,7 @@ class ClassChannelActuator {
         this._Suppression = new ClassSuppression(this);
         this._Status = 0;
     }
+    get Device() { return this._ThisActuator; }
 
     get Suppression() { return this._Suppression; }
 
@@ -216,7 +217,20 @@ class ClassChannelActuator {
     get ID() { 
         return `${this._ThisActuator.ID}-${this._ChNum}`; 
     }
-
+    /**
+     * @getter
+     * Возвращает уникальное имя канала
+     */
+    get Name() {
+        return `${this._ThisActuator.ID}-${this._ChannelNames[this._ChNum]}`; 
+    }
+    /**
+     * @getter
+     * Возвращает имя канала
+     */
+    get ChName() {
+        return this._ThisActuator._ChannelNames[this._ChNum];
+    }
     /**
      * @getter
      * Возвращает статус измерительного канала: 0 - не опрашивается, 1 - опрашивается, 2 - в переходном процессе
