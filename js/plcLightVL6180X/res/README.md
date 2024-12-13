@@ -77,7 +77,7 @@
 
 ```js
 //Инициализация каналов датчика
-let vl6180_channels = H.DeviceManager.Service.CreateDevice());
+let vl6180_channels = H.DeviceManager.Service.CreateDevice('vl');
 
 const ch0 = vl6180_channels[0];
 const ch1 = vl6180_channels[1];
