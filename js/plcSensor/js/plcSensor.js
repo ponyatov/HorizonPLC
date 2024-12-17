@@ -103,8 +103,8 @@ class ClassSensor extends ClassBaseSensor {
         this._Channels = Array(this._QuantityChannel);
 
         for (let i = 0; i < this._QuantityChannel; i++) {
-            _opts.channels = _opts.channels || [];
-            this._Channels[i] = new ClassChannelSensor(this, i, _opts.channels[i]);  // инициализируем и сохраняем объекты каналов
+            _opts.channelsConfig = _opts.channelsConfig || [];
+            this._Channels[i] = new ClassChannelSensor(this, i, _opts.channelsConfig[i]);  // инициализируем и сохраняем объекты каналов
         }
     }
 
@@ -272,6 +272,8 @@ class ClassChannelSensor {
         this._Alarms = null;
         this.AvgCapacity = opts.avgCapacity || 1;
         /** ******/
+        this.Address = opts.address;
+        /** ******/
     }
 
     get Alarms()      { return this._Alarms; }
@@ -290,17 +292,9 @@ class ClassChannelSensor {
 
     /**
      * @getter
-     * Возвращает уникальное имя канала
-     */
-    get Name() {
-        return `${this._Sensor.ID}-${this._ChannelNames[this._ChNum]}`; 
-    }
-
-    /**
-     * @getter
      * Возвращает имя канала
      */
-    get ChName() {
+    get Name() {
         return this._Sensor._ChannelNames[this._ChNum];
     }
     
