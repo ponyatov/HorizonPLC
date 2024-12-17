@@ -136,7 +136,7 @@ class ClassDeviceManager {
                 if (busName.startsWith('UART')) busObj = H.UARTbus.Service.AddBus(opts);
 
             } catch (e) {
-                // log failed to init bus [busname]
+                H.Logger.Log({ service: 'dm', level: 'E',  msg: `Failed to init bus ${busname}` });
             }
         }
     }  
