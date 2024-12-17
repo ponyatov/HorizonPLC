@@ -84,8 +84,10 @@ class ClassActuator extends ClassBaseActuator {
 
         this._Channels = Array(this._QuantityChannel);
 
-        for (let i = 0; i < this._QuantityChannel; i++)
-            this._Channels[i] = new ClassChannelActuator(this, i);
+        for (let i = 0; i < this._QuantityChannel; i++) {
+            _opts.channelsConfig = _opts.channelsConfig || [];
+            this._Channels[i] = new ClassChannelActuator(this, i, _opts.channelsConfig[i]);
+        }
     }
 
     get ID() { return this._Id; }
@@ -143,7 +145,7 @@ class ClassActuator extends ClassBaseActuator {
      * 
      * @returns {Boolean} 
      */
-    On(_chNum, _opts) { }
+    SetValue(_chNum, _opts) { }
 
     /**
      * @method
@@ -191,18 +193,20 @@ class ClassChannelActuator {
      * @param {ClassActuator} actuator - ссылка на основной объект актуатора
      * @param {Number} num - номер канала
      */
-    constructor(actuator, num) {
+    constructor(actuator, num, _opts) {
         if (actuator._Channels[num] instanceof ClassChannelActuator) return actuator._Channels[num];    //если объект данного канала однажды уже был иницииализирован, то вернется ссылка, хранящаяся в объекте физического сенсора  
-
+        let opts = _opts || {};
         this._Tasks = {};
         this._ActiveTask = null;
 
         this._ThisActuator = actuator;      // ссылка на объект физического актуатора
         this._ChNum = num;              // номер канала (начиная с 0)
 
-        this._Transform = new ClassTransform(this);
+        this._Transform   = new ClassTransform(this);
         this._Suppression = new ClassSuppression(this);
         this._Status = 0;
+
+        this.Address = opts.address;
     }
     get Device() { return this._ThisActuator; }
 
@@ -217,18 +221,12 @@ class ClassChannelActuator {
     get ID() { 
         return `${this._ThisActuator.ID}-${this._ChNum}`; 
     }
-    /**
-     * @getter
-     * Возвращает уникальное имя канала
-     */
-    get Name() {
-        return `${this._ThisActuator.ID}-${this._ChannelNames[this._ChNum]}`; 
-    }
+
     /**
      * @getter
      * Возвращает имя канала
      */
-    get ChName() {
+    get Name() {
         return this._ThisActuator._ChannelNames[this._ChNum];
     }
     /**
