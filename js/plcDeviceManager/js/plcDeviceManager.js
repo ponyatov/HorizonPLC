@@ -121,7 +121,7 @@ class ClassDeviceManager {
      * @description Выполняет инициализацию всех шин, указанных в конфиге к текущей программе.
      */
     InitBuses() {
-        let config = H.Process.Service.GetBusesConfig();
+        let config = Process.GetBusesConfig();
 
         for (let busName of Object.keys(config)) {
             try {
