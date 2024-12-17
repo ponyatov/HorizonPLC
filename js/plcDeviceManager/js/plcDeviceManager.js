@@ -26,7 +26,7 @@ class ClassDeviceManager {
         // запуск циклического опроса
         Object.on('dm-sub-sensorall', (_msg) => {
             // let freq = _msg.arg[0];
-            this.OnDevicesListGet();
+            this.OnSubSensall();
             if (!this._Interval) this.StartPolling(POLLING_FREQ);
         });
         // его остановка
