@@ -22,31 +22,43 @@
 ### Конструктор
 <div style = "color: #555">
 
-Конструктор принимает один объект типа **SensorOptsType** и один объект типа [**SensorOptsType**](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md).
-```js
-let _sensor_props = {
-    name: "MQ9",
-    type: "sensor",
-    channelNames: ['carbonyl'],
-    typeInSignal: "analog",
-    typeOutSignal: "analog",
-    quantityChannel: 1,
-    busType: [ "i2c" ],
-};
-let _opts = {
-    dataPin: A0,
-    heatPin: P10,
-    bus: i2c_bus,
-    model: "MQ9",
-    baseline: bl,
+Конструктор принимает объект типа [**SensorOptsType**](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md), который SensorManager формирует из конфигурации *device.json*. Конфигурация для модуля имеет следующий вид:
+```json
+"AirCarbonyl": 
+{
+    "pins": ["A0"],
+    "name": "MQ9",
+    "article": "02-501-0110-201-0003",
+    "type": "hybrid",
+    "channelNames": ["Carbonyl"],
+    "quantityChannel": 1,
+    "subChannels": ["Heater-0"],
+    "busTypes": [],
+    "manufacturingData": {},
+    "modules": ["plcAirCarbonylMQ9.min.js"],
+    "config": {
+      "baseline": 1000
+    }
 }
-sensor = new ClassAirCarbonylMQ9 (_opts, _sensor_props)
 ```
-- <mark style="background-color: lightblue">dataPin</mark> - номер пина, по которому будут считываться данные с датчика;
-- <mark style="background-color: lightblue">heatPin</mark> - номер пина, через который будет осуществляться контроль нагревателя датчика;
-- <mark style="background-color: lightblue">bus</mark> - объект класса I2C, возвращаемый диспетчером I2C шин - [I2Cbus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md);
-- <mark style="background-color: lightblue">model</mark> - имя модели датчика из серии MQX, нужно для выбора правильного преобразования в базовом классе;
+Следует выделить следующие ноды, имеющие особенности для этого модуля:
 - <mark style="background-color: lightblue">baseline</mark> - норма концентрации угарного газа в помещении, где проводится измерение. Является корректирующей величиной;
+- <mark style="background-color: lightblue">subChannels</mark> - так как датчик является гибридом, у него присутствуют субканалы актуатора для контроля нагревателя. Пример **SensorOptsType** для нагревателя:
+```json
+"Heater": 
+{
+    "pins": ["P13"],
+    "name": "Heater",
+    "article": "",
+    "type": "actuator",
+    "channelNames":  ["dpwm"],
+    "typeOutSignals": ["pwm"],
+    "quantityChannel": 1,
+    "busTypes": [],
+    "manufacturingData": {},
+    "modules": ["plcPortActuator.min.js"]
+}
+```
 </div>
 
 ### Поля
@@ -62,7 +74,7 @@ sensor = new ClassAirCarbonylMQ9 (_opts, _sensor_props)
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">Init(_sensor_props)</mark> - необходим для первоначальной настройки датчика;
+- <mark style="background-color: lightblue">Init()</mark> - необходим для первоначальной настройки датчика;
 - <mark style="background-color: lightblue">ControlHeater(_val)</mark> - контролирует нагрев датчика;
 - <mark style="background-color: lightblue">Calibrate(_val)</mark> - калибрует датчик. Если значение не передано, датчик калибруется автоматически;
 - <mark style="background-color: lightblue">Preheat()</mark> - запускает полный нагрев датчика на 30 секунд. Во время нагрева нельзя считаь данные с датчика. После выполнения метода нагреватель остаётся включенным;
@@ -83,51 +95,19 @@ sensor = new ClassAirCarbonylMQ9 (_opts, _sensor_props)
 
 Фрагмент кода для вывода данных о давлении и температуре в консоль раз в одну секунду. Предполагается, что все необходимые модули уже загружены в систему:
 ```js
-//Подключение необходимых модулей
-const err = require("ModuleAppError.min.js");
-const NumIs = require("ModuleAppMath.min.js");
-     NumIs.is(); //добавить функцию проверки целочисленных чисел в Number
+//Создание объекта датчика и массива каналов
+try {
+  let mq9 = H.DeviceManager.Service.CreateDevice("AirCarbonyl")[0];
+  mq9.Start();
 
-const gasClass = require('ClassAirCarbonylMQ9.min.js');
-//Настройка передаваемых объектов
-let opts = {pins: [A0, P10], quantityChannel: 1};
-let sensor_props = {
-    name: "MQ9",
-    type: "sensor",
-    channelNames: ['carbonyl'],
-    typeInSignal: "analog",
-    typeOutSignal: "analog",
-    quantityChannel: 1,
-    busType: [],
-    manufacturingData: {
-        IDManufacturing: [
-            {
-                "GasMeter": "A2655"
-            }
-        ],
-        IDsupplier: [
-            {
-                "Sensory": "5599"
-            }
-        ],
-        HelpSens: "MQ9 Air Carbonyl"
-    }
-};
-//Создание класса
-let gas = new gasClass(opts, sensor_props);
-
-//Нагрев и каллибровка
-gas.Preheat();
-gas.Calibrate();
-
-const ch0 = gas.GetChannel(0);
-ch0.Start(1000);
-
-//Вывод данных
-setInterval(() => {
-  console.log(`CO: ${(ch0.Value).toFixed(2)} ppm`);
-}, 1000);
-
+  // Вывод данных
+  setInterval(() => {
+    H.Logger.Service.Log({service: 'MQ9', level: 'I', msg: `Carbonyl: ${(mq9.Value).toFixed(3)} ppm`});
+  }, 1000);
+}
+catch (e) {
+  console.log(e);
+}
 ```
 Вывод данных в консоль:
 <p align="left">
@@ -136,6 +116,9 @@ setInterval(() => {
 <div>
 
 # Зависимости
+- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
+- [DeviceManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
+- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
 - [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
 - [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
 </div>

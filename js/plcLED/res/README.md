@@ -33,14 +33,17 @@
 Для создания объекта **Buzzer** требуется указать в конфиге его используемый пин, а так же максимальную частоту на которой предполагается его использовать. 
 Пример конфигурации:
 ```json
-"led": {
-    "pins": ["A3"],
-    "name": "Led",
+"LED": 
+{
+    "pins": ["A2"],
+    "name": "LED",
     "article": "02-501-0704-201-0002",
     "type": "actuator",
-    "channelNames": ["lumen"],
+    "channelNames": ["light"],
     "quantityChannel": 1,
-    "modules": ["ModuleLED.min.js"]
+    "busTypes": [],
+    "manufacturingData": {},
+    "modules": ["plcLED.min.js"]
 }
 ```
 
@@ -64,7 +67,7 @@
 
 ```js
 //Инициализация 
-const led = SensorManager.CreateSensor('led')[0];
+const led = H.DeviceManager.Service.CreateSensor('LED')[0];
 // Установка максимальной яркости в 50%
 led.Suppression.SetLim(0, 0.5);
 //Свечение зуммера на 40% яркости с частотой 60% от maxFreq

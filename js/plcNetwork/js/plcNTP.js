@@ -75,7 +75,7 @@ class ClassNTP {
             }
         }
         catch (e) {
-            H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${e.message}`});
+            H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${e}`});
         }
     }
     NTPtoMsecs(dv, offset) {

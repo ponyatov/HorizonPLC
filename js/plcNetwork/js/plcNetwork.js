@@ -121,7 +121,7 @@ class ClassWifi {
     GetAPCreds(nc, callback) {
         if (nc.scan == -1) {
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Scanning the net. . .'});
-            this._Core.scan((scn) => {
+            this._Core.scan((err, scn) => {
                 this._Scan = scn;
                 let pass = this.GetNetPassword(this._Scan);
                 callback(pass);
@@ -217,6 +217,16 @@ class ClassWifi {
         /*if (esp == 'esp8266') {
             this._Core.setUDP(_host, _port);
         }*/
+    }
+    GetSocksData() {
+        if (this._ChipType === 'esp8266') {
+            this._Core.getSocks((d) => {
+                H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Socket data: ${d}`});
+            });
+        }
+        else {
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Socket info not supported for current chip!`});
+        }
     }
 }
 

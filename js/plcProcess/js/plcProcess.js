@@ -16,7 +16,7 @@ const ACTUATOR_ANCESTOR = 'plcActuator.min.js';
 
 // Ноды
 const BUS_NODE = 'bus';
-const RTC_NODE = 'RTC';
+const RTC_NODE = 'SysClock';
 const LED_NODE = 'SysLED';
 const BUZZ_NODE = 'SysBuzzer';
 const DEFAULT_FILE = '.bootcde';
@@ -40,6 +40,9 @@ const MSG_LED_FAILED = 'Failed to set system LED:';
 const MSG_BUZZ_FAILED = 'Failed to set system buzzer:';
 const MSG_TIME_SET_FAIL = 'Failed to properly set system time!';
 const MSG_TIME_SET_SUCCESS = 'System time set to';
+const MSG_DRIVER_ERROR = 'Error loading driver';
+const MSG_DRIVER_SUCCESS = 'Channels loaded:';
+const MSG_DRIVER_WARNING = 'channel already exist!';
 const MSG_MODULE_LOADED = 'loaded.';
 const MSG_MODULE_FAILED = 'failed to load. Reason:';
 const MSG_MODULE_UNDEFINED = 'Undefined in config file!';
@@ -151,6 +154,7 @@ class ClassProcess {
             }
 
             this.InitSysEvents();
+            this.InitializeModuleDrives();
 
             /** Internet connection and system time*/
             try {
@@ -254,31 +258,31 @@ class ClassProcess {
         }
     }
     InitSysEvents() {
-        let node_id = this.GetModuleIdByName(LED_NODE);
         let on = false;
         let interval;
+        let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
 
         try {
-            if (typeof node_id === 'undefined')
-                H.Logger.Service.Log({service: this._Name, level: 'W', msg: MSG_LED_NOT_SPECIFIED});
-            else {
-                this._SysLED = H.DeviceManager.Service.CreateDevice(node_id)[0];
+            if (Object.keys(conf).includes(LED_NODE)) {
+                this._SysLED = H.DeviceManager.Service.CreateDevice(LED_NODE)[0];
                 H.Logger.Service.Log({service: this._Name, level: 'i', msg: `${MSG_LED_FOUND + this._SysLED._ThisActuator._Pins[0]}`});
                 this._SysLED.SetValue(0);
+            }
+            else {
+                H.Logger.Service.Log({service: this._Name, level: 'W', msg: MSG_LED_NOT_SPECIFIED});
             }
         }
         catch (e) {
             H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_LED_FAILED} ${e.message}`});
         }
 
-        node_id = this.GetModuleIdByName(BUZZ_NODE);
-
         try {
-            if (typeof node_id === 'undefined')
-                H.Logger.Service.Log({service: this._Name, level: 'W', msg: MSG_BUZZ_NOT_SPECIFIED});
-            else {
-                this._SysBuzzer = H.DeviceManager.Service.CreateDevice(node_id)[0];
+            if (Object.keys(conf).includes(BUZZ_NODE)) {
+                this._SysBuzzer = H.DeviceManager.Service.CreateDevice(BUZZ_NODE)[0];
                 H.Logger.Service.Log({service: this._Name, level: 'i', msg: `${MSG_BUZZ_FOUND + this._SysBuzzer._ThisActuator._Pins[0]}`});
+            }                
+            else {
+                H.Logger.Service.Log({service: this._Name, level: 'W', msg: MSG_BUZZ_NOT_SPECIFIED});
             }
         }
         catch (e) {
@@ -342,6 +346,41 @@ class ClassProcess {
     }
     /**
      * @method
+     * Инициализирует модули, описанные в выбранной конфигурации
+     */
+    InitializeModuleDrives() {
+        let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
+        let driverArr = new Array();
+
+        Object.keys(conf).forEach(driver => {
+            if (driver != BUS_NODE && driver != LED_NODE && driver != BUZZ_NODE && driver != RTC_NODE)
+            {
+                try {
+                    let instance = H.DeviceManager.Service.CreateDevice(driver);
+                    instance.forEach(channel => {
+                        if (driverArr.includes(channel.Name)) {
+                            H.Logger.Service.Log({service: this._Name, level: 'W', msg: `${channel.Name} ${MSG_DRIVER_WARNING}`});
+                        }
+                        else {
+                            Object.defineProperty(global, channel.Name, ({
+                                get: () => channel
+                            }));
+                            driverArr.push(channel.Name);
+                        }
+                    })
+                    
+                }
+                catch (e) {
+                    H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_DRIVER_ERROR} ${e.message}`});
+                }
+            }
+        })
+        if (driverArr.length > 0) {
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_DRIVER_SUCCESS} ${driverArr.join()}`});
+        }
+    }
+    /**
+     * @method
      * Возвращает название исполняемой программы.
      * @returns 
      */
@@ -391,13 +430,13 @@ class ClassProcess {
      */
     SetSystemTime() {
         try {
-            let node_name = this.GetModuleIdByName(RTC_NODE);
+            let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
 
-            if (typeof node_name === 'undefined') {
+            if (!(Object.keys(conf).includes(RTC_NODE))) {
                 throw {message: MSG_RTC_NOT_SPECIFIED};
             }
 
-            this._RTC = H.DeviceManager.Service.CreateDevice(node_name)[0];
+            this._RTC = H.DeviceManager.Service.CreateDevice(RTC_NODE)[0];
             let ts = this._RTC._Sensor.GetTimeUnix();
             let sys_t = Math.floor(new Date().getTime() / 1000);
 
@@ -431,25 +470,6 @@ class ClassProcess {
         else {
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_TIME_SET_SUCCESS} ${this.GetSystemTime()}`});
         }
-    }
-    /**
-     * @method
-     * Возвращает ID модуля из конфигурации по имени
-     * @param {String} _name - имя модуля
-     */
-    GetModuleIdByName(_name) {
-        let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
-        let arr = Object.keys(conf);
-        let res;
-
-        for (let i = 0; i < arr.length; i++) {
-            if (conf[arr[i]].name == _name) {
-                res = arr[i];
-                break;
-            }
-        }
-
-        return res;
     }
     /**
      * @method

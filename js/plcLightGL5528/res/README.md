@@ -34,16 +34,18 @@ GL5528 имеет следующие технические параметры: 
 
 Конструктор принимает данные из конфига. Пример ниже:
 ```json
-"11": {
+"LightGL": {
     "k": 32017200,
     "p": -1.5832,
     "pins": ["A3"],
-    "name": "GL5528",
+    "name": "LightGL5528",
     "article": "02-501-0105-201-0003",
     "type": "sensor",
-    "channelNames": ["light", "resistance"],
+    "channelNames": ["light","resistance"],
     "quantityChannel": 2,
-    "modules": ["ModuleLightGL5528.min.js"]
+    "busTypes": [],
+    "manufacturingData": {},
+    "modules": ["plcLightGL5528.min.js"]
 }
 ```
 </div>
@@ -74,7 +76,7 @@ GL5528 имеет следующие технические параметры: 
 
 ```js
 //Создание объекта класса
-let gl5528 = SensorManager.CreateDevice('11');
+let gl5528 = H.DeviceManager.Service.CreateDevice('LightGL');
 let light = gl5528[0];
 let r = gl5528[1];
 
@@ -84,8 +86,7 @@ light.Configure({ k: 32017200, p: -1.5832 });
 light.Start(50);
 
 let interval = setInterval(() => {
-    console.log(`Light value is ${(light.Value).toFixed(1)} Lux`);
-    console.log(`Resistance is ${(r.Value).toFixed(0)} Ohm`);
+    H.Logger.Service.Log({service: 'GL5528', level: 'I', msg: `Light: ${(light.Value).toFixed(1)} Lux    Res: ${(r.Value).toFixed(0)} Ohm`});
 }, 1000);
 ```
 Результат выполнения:
@@ -98,6 +99,11 @@ let interval = setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
+- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
+- [SensorManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
+- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
+- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
+- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
 </div>
 
 </div>

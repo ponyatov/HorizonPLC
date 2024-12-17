@@ -29,22 +29,21 @@
 ## Конструктор
 <div style = "color: #555">
 
-Конструктор принимает данные из конфига. Пример ниже:
+Конструктор принимает объект типа [**SensorOptsType**](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md), который SensorManager формирует из конфигурации *device.conf*. Конфигурация для модуля имеет следующий вид:
 ```json
-"00": {
-    "name": "VL6180",
+"LightVL": 
+{
     "bus": "I2C11",
-    "address": 0x29,
-    "article": "02-501-0102-201-0004",
+    "name": "LightVL6180",
+    "article": "02-501-0105-201-0004",
     "type": "sensor",
     "channelNames": ["light", "range"],
     "quantityChannel": 2,
-    "modules": ["ModuleVL6180.min.js"]
+    "busTypes": ["i2c"],
+    "manufacturingData": {},
+    "modules": ["plcLightVL6180.min.js"]
 }
 ```
-- <mark style="background-color: lightblue">bus</mark> - объект класса I2C, возвращаемый диспетчером I2C шин - [I2Cbus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md);
-- <mark style="background-color: lightblue">address</mark> - адрес датчика на шине;
-
 </div>
 
 ### Поля
@@ -57,7 +56,7 @@
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">Init(_sensor_props)</mark> - проводит инициализацию датчика настройкой необходимых для его работы полей и регистров;
+- <mark style="background-color: lightblue">Init()</mark> - проводит инициализацию датчика настройкой необходимых для его работы полей и регистров;
 - <mark style="background-color: lightblue">Configure()</mark> - конфигурирует работу датчика;
 - <mark style="background-color: lightblue">Start(_num_channel)</mark> - запускает циклический опрос определенного канала датчика со стандартной периодичностью;
 - <mark style="background-color: lightblue">Stop(_num_channel)</mark> - прекращает считывание значений с заданного канала;
@@ -77,18 +76,13 @@
 
 ```js
 //Инициализация каналов датчика
-let vl6180_channels = DevicesManager.CreateDevice());
-
-const ch0 = vl6180_channels[0];
-const ch1 = vl6180_channels[1];
-ch0.Start();
-ch1.Start();
+let vl6180 = H.DeviceManager.Service.CreateDevice("LightVL");
+const ch0 = vl6180[0];
+const ch1 = vl6180[1];
+vl6180.Start();
 
 setInterval(() => {
-    if (ch0.Status)
-        console.log((ch0.Value).toFixed(1) + "lux");
-    if (ch1.Status)
-        console.log((ch1.Value).toFixed(1) + "mm");
+    H.Logger.Service.Log({service: 'VL6180', level: 'I', msg: `Light: ${(ch0.Value).toFixed(1)} Lux    Dist: ${(ch1.Value).toFixed(0)} mm`});
 }, 1000);
 ```
 Результат выполнения:
@@ -101,8 +95,12 @@ setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">[ModuleSensorArchitecture](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)</mark>
-- <mark style="background-color: lightblue">[ClassAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)</mark>
+- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
+- [SensorManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
+- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
+- [ClassBaseI2CBus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md)
+- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
+- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
 </div>
 
 </div>

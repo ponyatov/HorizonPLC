@@ -34,10 +34,11 @@ var at;
 var socks = [];
 var sockUDP = [];
 var sockData = ["","","","",""];
+var sockInfo = ["undefined","undefined","undefined","undefined","undefined"];
 var MAXSOCKETS = 5;
 
-let udpAdr = "127.0.0.1";
-let udpPrt = 80;
+//let udpAdr = "127.0.0.1";
+//let udpPrt = 80;
 
 function udpToIPAndPort(data) {
   return {
@@ -74,6 +75,7 @@ var netCallbacks = {
       at.cmd(`AT+CIPSERVER=1,${port}\r\n`, 10000, function(d) {
         if (d=="OK") {
           socks[sckt] = true;
+          sockInfo[sckt] = 'TCP-Server';
         } else {
           socks[sckt] = undefined;
           setTimeout(function() {
@@ -91,8 +93,9 @@ var netCallbacks = {
       var cmd;
       if (type == 2) {
         // If there's a port specified, make a server now - otherwise reserve the socket and do it later
-        cmd = `AT+CIPSTART=${sckt},"UDP","${udpAdr}",${udpPrt},${udpPrt},2\r\n`;
-        socks[sckt] = "UDP";
+        if (port) cmd = `AT+CIPSTART=${sckt},"UDP",${host},${port},${port},2\r\n`;
+        else socks[sckt] = "UDP";
+        sockInfo[sckt] = 'UDP-Client';
         sockUDP[sckt] = true;
       } else {
         let socktype = "TCP";
@@ -101,6 +104,7 @@ var netCallbacks = {
           socktype = "SSL";
           if (port==80) port = 443;
         }
+        sockInfo[sckt] = 'TCP-Client';
         cmd = `AT+CIPSTART=${sckt},"${socktype}",${JSON.stringify(host)},${port}\r\n`;
         //console.log(cmd);
         delete sockUDP[sckt];
@@ -109,14 +113,15 @@ var netCallbacks = {
         //console.log("CIPSTART "+JSON.stringify(d));
         if (d=="ALREADY CONNECTED") return cb; // we're expecting an ERROR too
         // x,CONNECT should have been received between times. If it hasn't appeared, it's an error.
-        if (d!="OK") socks[sckt] = -6; // SOCKET_ERR_NOT_FOUND
+        if (d!="OK" || socks[sckt]!==true) socks[sckt] = -6; // SOCKET_ERR_NOT_FOUND
       });
     }
     return sckt;
   },
   /* Close the socket. returns nothing */
   close : function(sckt) {
-    console.log("CLOSE ",arguments);
+    //console.log("CLOSE ",arguments);
+    sockInfo[sckt] = 'undefined';
     if (socks[sckt]=="Wait")
       socks[sckt]="WaitClose";
     else if (socks[sckt]!==undefined) {
@@ -165,20 +170,19 @@ var netCallbacks = {
   Less than 0  */
   send : function(sckt, data, type) {
     if (!at) return -1; // disconnected
-    //if (at.isBusy() || socks[sckt]=="Wait") return 0;
+    if (at.isBusy() || socks[sckt]=="Wait") return 0;
     if (socks[sckt]<0) return socks[sckt]; // report an error
     if (!socks[sckt]) return -1; // close it
     //console.log("SEND ",arguments);
-    var d;
-    
-    /*if (socks[sckt]=="UDP") {
+    var d;    
+    if (socks[sckt]=="UDP") {
       d = udpToIPAndPort(data);
       socks[sckt]="Wait";
       at.cmd('AT+CIPSTART='+sckt+',"UDP","'+d.ip+'",'+d.port+','+d.port+',2\r\n',10000,function(d) {
         if (d!="OK") socks[sckt] = -6; // SOCKET_ERR_NOT_FOUND
       });
       return 0;
-    }*/
+    }
     //console.log("Send",sckt,data);
     var returnVal = data.length;
     var extra = "";
@@ -323,7 +327,7 @@ var wifiFuncs = {
     var aps = [];
     at.cmdReg('AT+CWLAP\r\n', 5000, '+CWLAP:', function(d) {
         var ap = d.slice(8, -1).split(',');
-        console.log(d);
+        //console.log(d);
         aps.push({
           ssid: JSON.parse(ap[1]),
           enc: ENCR_FLAGS[ap[0]],
@@ -332,7 +336,7 @@ var wifiFuncs = {
         });
       },
       function() {
-        callback(aps);
+        callback(null, aps);
       }
     );
   },
@@ -389,7 +393,20 @@ var wifiFuncs = {
       } else if (d=="OK") callback(time); else callback();
     });
   },
-  setIP: function(settings, callback) {
+  setMDNS: function(hostname, serviceType, port, callback) {
+    //at.cmd("AT+MDNS=1,\"espressif\",\"_printer\",35,\"my_instance\",\"_tcp\",2,\"product\",\"my_printer\",\"firmware_version\",\"AT-V3.4.1.0\"\r\n", 500, function(d) {
+    at.cmd("AT+MDNS=1,\""+ hostname + "\",\""+ serviceType + "\"," + port +"\r\n",500,function(d) {
+      callback(d=="OK"?null:d);
+    });
+  },
+  getSocks: function (callback) {
+    let res = [];
+    for (let i = 0; i < MAXSOCKETS; i++) {
+      res[i] = `${sockInfo[i]}:${socks[i]?'OPEN':'CLOSED'}`;
+    }
+    callback(res);
+  }
+  /*setIP: function(settings, callback) {
     var cmd, timeout;
     if (typeof settings!="object" || !settings.ip) {
       cmd = "AT+CWDHCP_CUR=1,1\r\n";
@@ -407,17 +424,7 @@ var wifiFuncs = {
       if (d=="OK") callback(null);
       else return callback("setIP failed: "+(d?d:"Timeout"));
     });
-  },
-  setMDNS: function(hostname, serviceType, port, callback) {
-    //at.cmd("AT+MDNS=1,\"espressif\",\"_printer\",35,\"my_instance\",\"_tcp\",2,\"product\",\"my_printer\",\"firmware_version\",\"AT-V3.4.1.0\"\r\n", 500, function(d) {
-    at.cmd("AT+MDNS=1,\""+ hostname + "\",\""+ serviceType + "\"," + port +"\r\n",500,function(d) {
-      callback(d=="OK"?null:d);
-    });
-  },
-  setUDP: function(hostname, port) {
-    udpAdr = hostname;
-    udpPrt = port;
-  }
+  },*/
 };
 
 
