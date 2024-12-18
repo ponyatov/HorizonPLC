@@ -1,9 +1,13 @@
+const ClassSensor   = require('plcSensor');
+const ClassActuator = require('plcActuator');
+
 const POLLING_FREQ = 5;
 /**
  * @typedef ClassMsg
  * @property {[string|number]} arg
  * @property {[string|number]} value
  */
+
 /**
  * @class
  * Реализует функционал службы для работы с измерительно-исполняющими устройствами: 
@@ -22,6 +26,7 @@ class ClassDeviceManager {
         // запуск циклического опроса
         Object.on('dm-sub-sensorall', (_msg) => {
             // let freq = _msg.arg[0];
+            this.OnSubSensall();
             if (!this._Interval) this.StartPolling(POLLING_FREQ);
         });
         // его остановка
@@ -33,15 +38,84 @@ class ClassDeviceManager {
 
         this.InitBuses();
     }
+
     get Devices() { return this._Devices; }
 
-    get Sensors() {
-        return this._Devices.filter(device => device._Type.toLowerCase() === 'sensor' || device._Type.toLowerCase() === 'hybrid');
+    get Sensors() { return this._Devices.filter(device => device instanceof ClassSensor); }
+
+    get Actuators() { return this._Devices.filter(device => device instanceof ClassActuator); }
+    /**
+     * @getter
+     * Возвращает массив всех каналов 
+     */    
+    get Channels() {
+        let ch_list = [];
+        this.Devices.forEach(_dev => {
+            _dev._Channels.forEach(_ch => ch_list.push(_ch));
+        });
+        return ch_list;
+    }
+    /**
+     * @getter
+     * Возвращает массив каналов сенсоров
+     */
+    get SensorChannels() {
+        let ch_list = [];
+        this.Sensors
+            .forEach(_dev => {
+                _dev._Channels.forEach(_ch => ch_list.push(_ch));
+            });
+        return ch_list;
+    }
+    /**
+     * @getter
+     * Возвращает массив каналов актуаторов
+     */
+    get ActuatorChannels() {
+        let ch_list = [];
+        this.Actuators
+            .forEach(_dev => {
+                _dev._Channels.forEach(_ch => ch_list.push(_ch));
+            });
+        return ch_list;
+    }
+    /**
+     * @typedef TypeDeviceMappingInfo
+     * @property {string} address
+     * @property {string} name
+     */
+    /**
+     * @typedef TypeSubSensList
+     * @property {[TypeDeviceMappingInfo]} sensor
+     * @property {[TypeDeviceMappingInfo]} actuator
+     */
+    /**
+     * @method
+     * @description возвращает объект с данными, необходимыми для маппинга сенсоров и актуаторов
+     * @returns {TypeSubSensList}
+     */
+    GetSublist() {
+        return ({ 
+            sensor:     this.SensorChannels.filter(_ch => _ch.Address).map(_ch => ({ name: _ch.ID, address: _ch.Address })), 
+            actuator: this.ActuatorChannels.filter(_ch => _ch.Address).map(_ch => ({ name: _ch.ID, address: _ch.Address })) 
+        });
+    }
+    /**
+     * @method
+     * @description Возвращает список каналов PLC согласно протоколу lhp
+     */
+    GetLHPDevlist() {
+        let value = { sensor: [], actuator: [] };
+        
+        this.ActuatorChannels.forEach(_ch => {
+            value.sensor.push(`${_ch.Device._Article}-${ch.ID}`);
+        });
+        this.SensorChannels.forEach(_ch => {
+            value.actuator.push(`${_ch.Device._Article}-${ch.ID}`);
+        });
+        return value;
     }
 
-    get Actuators() {
-        return this._Devices.filter(device => device._Type.toLowerCase() === 'actuator');
-    }
     /**
      * @method
      * @description Выполняет инициализацию всех шин, указанных в конфиге к текущей программе.
@@ -62,7 +136,7 @@ class ClassDeviceManager {
                 if (busName.startsWith('UART')) busObj = H.UARTbus.Service.AddBus(opts);
 
             } catch (e) {
-                // log failed to init bus [busname]
+                H.Logger.Log({ service: 'dm', level: 'E',  msg: `Failed to init bus ${busname}` });
             }
         }
     }  
@@ -150,25 +224,23 @@ class ClassDeviceManager {
      * Собирает и возвращает информацию о датчиках
      * @param {[String]} idArr - массив id
      */
-    OnDevicesListGet() {
-        let data_package = {
+    OnDevicesListGet(_msg) {
+        let msg = {
             com: 'dm-deviceslist-set',
-            value: [{ sensor: [], actuator: [] }]
-        };
-        // перебор устройств
-        this.Sensors.forEach(_sens => {
-            _sens._Channels.forEach(ch => {
-                data_package.value[0].sensor.push(`${_sens._Article}-${ch.ID}`);
-            });
-        });
+            value: [this.GetLHPDevlist()]
+        }
+        // Object.emit(msg.com, msg);
+        this.SendWS(msg);
+    }
 
-        this.Actuators.forEach(_act => {
-            _act._Channels.forEach(ch => {
-                data_package.value[0].actuator.push(`${_act._Article}-${ch.ID}`);
-            });
-        });
-
-        this.SendWS(data_package);
+    OnSubSensall(_msg) {
+        let source = _msg.metadata ? _msg.metadata.source ? _msg.metadata.source : undefined : undefined;
+        if (!source) return;
+        let msg = {
+            com: `${source}-sub-sensorall`,
+            value: [this.GetSublist()]
+        }
+        Object.emit(msg.com, msg);
     }
     /**
      * @method

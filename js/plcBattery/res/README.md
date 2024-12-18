@@ -38,10 +38,8 @@
     "name": "Battery",
     "type": "actuator",
     "channelNames": ["charge, voltage"],
-    "typeInSignals": ["analog"],
     "quantityChannel": 2,
-    "manufacturingData": {},
-    "modules": ["ModuleBattery.min.js"]
+    "modules": ["plcBattery.min.js"]
 }
 ```
 **Примечание**: значение *fullChargeV* можно замерить самостоятельно. *dischargeV* выбирается в зависимости от модели источника питания и температуры. Коэффициент *k* можно вычислить либо зная номиналы резисторов, либо рассчитав *Uвых/Uвх*.
@@ -87,7 +85,7 @@
 
 ```js
 // Создание объекта класса
-let battery = SensorManager.CreateDevice('14');
+let battery = H.DeviceManager.Service.CreateDevice('14');
 let charge = battery[0];
 let voltage = battery[1];
 charge.Start();
@@ -100,7 +98,7 @@ setTimeout(() => {
 ```
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -110,4 +108,6 @@ setTimeout(() => {
 
 </div>
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
