@@ -1,6 +1,6 @@
 <div style = "font-family: 'Open Sans', sans-serif; font-size: 16px">
 
-# ModuleWiFiEsp8266
+# ModuleNetwork
 <p align="center">
   <img src="logo.png" width="400" title="hover text">
 </p>
@@ -13,10 +13,10 @@
 # Описание
 <div style = "color: #555">
 
-Модуль предназначен для реализации сервисных функций при установлении WiFi соединения с использованием чипа [Esp8266](https://github.com/Konkery/ModuleWiFiEsp8266/blob/main/res/0a-esp8266ex_datasheet_en.pdf). В текущей версии модуль поддерживает работу **только в режиме клиента**.  Модуль является неотъемлемой частью фреймворка Horizon Automated. Модуль автоматически проверяет присутствие в системе Espruino базовых модулей для работы с WiFi, что свидетельствует о встроеном в плату чипе и, если модули отсутствуют, автоматически подключает базовый модуль для работы с периферийным чипом, с которым модуль работает по Serial интерфейсу.  Для работы модуля необходим конфигурационный файл с именем APs.json, содержащий данные для подключения. Файл должен быть размещён во Flash памяти (в файловой системе). После сканирования модуль произведёт подключение к первой найденной сети, описанной в этом файле, что исключает необходимость изменений в коде каждый раз, когда необходимо новое подключение. Модуль реализует свой функционал через глобальный объект с именем wifi. 
+Модуль реализует службу сервисных функций для установлении сетевого соединения с использованием чипа [Esp8266](https://github.com/Konkery/ModuleWiFiEsp8266/blob/main/res/0a-esp8266ex_datasheet_en.pdf) и Esp32 по Wifi, а также по Ethernet с использованием чипа W5500 и библиотеки WizNET. В текущей версии модуль поддерживает работу **только в режиме клиента**.  Модуль является неотъемлемой частью фреймворка Horizon Automated. В зависимости от полученных данных в конструкторе определяется с каким модулем будет осуществлено взаимодействие.  Для работы модуля необходим конфигурационный файл с именем network.json, содержащий данные для подключения. Файл должен быть размещён во Flash памяти (в файловой системе). Подключение к сети осуществляется автоматически при инициализации фреймворка, параметры подключения выбираются в файле файле, что исключает необходимость изменений в коде каждый раз, когда необходимо новое подключение. Служба имеет имя Network в глобальном объекте H. 
 
 Архитектурные решения:
-- создаёт шину через глобальный объект [UARTbus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md);
+- хранится в глобальном объекте служб H;
 - реализует паттерн синглтон;
 - работает в режиме клиента.
 </div>
@@ -24,20 +24,21 @@
 ### Конструктор
 <div style = "color: #555">
 
-Конструктор принимает пины *_rx* и *_tx*, которые используются для работы с периферийным чипом. В случае присутствия на плате встроенного чипа передаваемые поля не будут использованы и их можно оставить пустыми. Для работы необходим конфигурационный файл, содержащий SSID и пароль сети, к которой необходимо подключится.
-
-Пример файла конфигурационного файла APs.json:
+Конструктор принимает объект с опциями, содержащий единственное поле - базовый модуль. Это строка для динамического вызова функции require() при использовании чипа Esp8266.
+Этот параметр прописывается в файле конфигурации служб services.json:
 ```json
-[
-    {
-        "ssid":"ssid1",
-        "pass":"password1"
+"Network" : 
+{
+    "Status" : "stopped",
+    "ErrorMsg" : "",
+    "Importance" : "Primary",
+    "InitOrder" : 80,
+    "AdvancedOptions" : {
+        "baseModule" : "Esp8266.min.js"
     },
-    {
-        "ssid":"ssid2",
-        "pass":"password2"
-    }
-]
+    "Dependency" : ["plcNetwork.min.js"],
+    "Description" : "Network desription"
+}
 ```
 </div>
 
@@ -45,8 +46,9 @@
 <div style = "color: #555">
 
 - <mark style="background-color: lightblue">_Name</mark> - имя класса в строковом виде;
-- <mark style="background-color: lightblue">_Wifi</mark> - объект базового класса, непосредственно работающего с чипом;
-- <mark style="background-color: lightblue">_Bus</mark> - Serial шина для работы с периферийным чипом;
+- <mark style="background-color: lightblue">_Core</mark> - объект базового класса, непосредственно работающего с чипом;
+- <mark style="background-color: lightblue">_ChipType</mark> - тип чипа, обеспечивающего соединеное по сети;
+- <mark style="background-color: lightblue">_Bus</mark> - шина для работы с периферийным чипом;
 - <mark style="background-color: lightblue">_Ssid</mark> - ssid сети, к которой осуществляется подключение;
 - <mark style="background-color: lightblue">_Scan</mark> - массив объектов сетей, найденных во время сканирования;
 - <mark style="background-color: lightblue">_Ip</mark> - ip-адрес сети, к которой осуществляется подключениею.
@@ -55,31 +57,67 @@
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">Init(_rx, _tx)</mark> - осуществляет соединение с wifi сетью, указанной в конфигурационном файле;
-- <mark style="background-color: lightblue">InitBus(_rx, _tx)</mark> - создаёт новую Serial шину для работы с периферийным чипом.
-Вызывается внутри метода *Init()*, если отсутствует встроенный модуль WiFi.
+- <mark style="background-color: lightblue">Init(nc, bus, flag, callback)</mark> - осуществляет соединение с сетью, указанной в конфигурационном файле;
+От службы Process функция принимает флаг, определяющий используемый чип, шину, по которой будет подключён чип, и конфигурация из network.json. Выбирается либо
+Wifi, либо Ethernet.
+Пример файла конфигурационного файла network.json:
+```json
+{
+	"wifi" : {                // Начало конфигурации Wifi
+		"useWifi" : 0,          // Флаг использования
+		"bus" : {               // Описание используемой шины
+			"index" : "Serial3",  // Имя шины
+			"baudrate" : 115200
+		},
+		"scan": 0,              // Номер ТД в массиве, к которой осуществляется подключение (при значении -1 происходит скан и подключение по первому совпадению)
+		"accpoints": [          // Массив точек доступа
+			{
+				"ssid":"ssid1",
+				"pass":"password1"
+			},
+			{
+				"ssid":"ssid2",
+				"pass":"password2"
+			}
+		],
+		"usestatic": 0,           // Флаг использования статики
+		"staticconf": {           // Конфигурация статики
+			"ip": "192.168.50.159",
+			"gw": "192.168.50.251",
+			"nm": "255.255.255.0"
+		}
+	},
+	"eth" : {                 // Начало конфигурации Ethernet
+		"useEth" : 0,           // Флаг использования
+		"bus" : {               // Описание используемой шины
+			"index" : "SPI2",     // Имя шины
+			"mosi" : "B15",
+			"miso" : "B14",
+			"sck" : "B13",
+			"cs" : "C8",
+			"baudrate" : 3200000
+		},
+		"usestatic": 0,           // Флаг использования статики
+		"staticconf": {           // Конфигурация статики
+			"ip": "192.168.51.33",
+			"gw": "192.168.51.251",
+			"nm": "255.255.255.0"
+		}
+	}
+}
+```
+- <mark style="background-color: lightblue">WifiSequence(nc, callback)</mark> - метод запуска подключения к сети по Wifi;
+- <mark style="background-color: lightblue">EtherSequence(nc, bus, callback)</mark> - метод запуска подключения к сети по Ethernet;
+- <mark style="background-color: lightblue">GetAPCreds(nc, callback)</mark> - метод определяет к какой точке доступа осуществить подключение, ориентируясь на конфигурацю;
+- <mark style="background-color: lightblue">Connect(pass, callback)</mark> - метод непосредственного подключения к сети по Wifi;
+- <mark style="background-color: lightblue">SetStatic(nc, callback)</mark> - метод установки статического IP-адреса при подключении по Wifi;
+- <mark style="background-color: lightblue">GetNetPassword(_aps)</mark> - находит в конфигурации пароль, соответствующей выбранной точке доступа.
 </div>
 
 ### Примеры
 <div style = "color: #555; font-size: 16px">
 
-Фрагмент кода для создание wifi. Предполагается, что все необходимые модули уже загружены в систему:
-```js
-//Подключение необходимых модулей
-const ClassWifi = require('ClassWiFiEsp8266.min.js');
-const ClassUARTBus = require ('ClassBaseUARTBus.min.js');
-
-// Создание шины и объекта wifi
-let UARTbus = new ClassUARTBus();
-let wifi = new ClassWifi(B9, B10);
-
-setTimeout(() => {
-  console.log("Found networks:");
-  console.log(wifi._Scan);
-  console.log("Connected to:" + wifi._Ssid);
-  console.log("IP:" + wifi._Ip);
-}, 20000);
-```
+Служба запускается автоматически при инициализации фреймворка. Пользователю предоставляется использование методов служюы, но необходимости в повторном запуске нет.
 Вывод созданнного объекта в консоль:
 <p align="left">
   <img src="./res/output.png" title="hover text">

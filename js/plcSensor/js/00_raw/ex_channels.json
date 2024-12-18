@@ -1,0 +1,58 @@
+{
+	"default": {
+		"vl-0": {
+			"address": "/Horizon/PLC-11-0",
+			"avgCapacity": 5,
+			"transform": {
+				"k": 1,
+				"b": 0
+			},
+			"suppression": {
+				"low": -100,
+				"high": 300
+			},
+			"filter": {
+				"module": "filters.min.js",
+				"funcName": "filter1"
+			},
+			"zones": {
+				"red": {
+					"low": -500,
+					"high": 500,
+					"cbLow": {
+						"module": "zones.min.js",
+						"funcName": "zone1"
+					},
+					"cbHigh": {
+						"module": "zones.min.js",
+						"funcName": "zone2"
+					}
+				}
+			},
+			"yellow": {
+				"low": -300,
+				"high": 300,
+				"cbLow": {
+					"module": "zones.min.js",
+					"funcName": "zone3"
+				},
+				"cbHigh": {
+					"module": "zones.min.js",
+					"funcName": "zone4"
+				}
+			}
+		},
+		"vl-1": {
+			"address": "/Horizon/PLC-11-0",
+			"avgCapacity": 4,
+			"transform": {
+				"k": 10,
+				"b": 0
+			},
+			"suppression": {
+				"low": 0,
+				"high": 200
+			}
+		}
+	}
+}

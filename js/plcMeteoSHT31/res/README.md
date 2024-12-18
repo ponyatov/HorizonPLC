@@ -23,26 +23,21 @@
 ### Конструктор
 <div style = "color: #555">
 
-Конструктор принимает 1 объект типа **SensorOptsType** и 1 объект типа [**SensorOptsType**](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md):
-```js
-let sensor_props = {
-    name: "SHT31",
-    type: "sensor",
-    channelNames: ['temperature', 'humidity'],
-    typeInSignal: "analog",
-    typeOutSignal: "digital",
-    quantityChannel: 2,
-    busType: [ "i2c" ],
-};
-const _opts = {
-    bus: i2c_bus,
-    address: 0x44,
-    repeatability: 'LOW'
+Конструктор принимает объект типа [**SensorOptsType**](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md), который SensorManager формирует из конфигурации *device.conf*. Конфигурация для модуля имеет следующий вид:
+```json
+"MeteoSHT":
+{
+    "bus": "I2C10",
+    "name": "MeteoSHT31",
+    "article": "02-501-0105-201-0006",
+    "type": "sensor",
+    "channelNames": ["temperature", "humidity"],
+    "quantityChannel": 2,
+    "busTypes": ["i2c"],
+    "manufacturingData": {},
+    "modules": ["plcMeteoSHT31.min.js"]
 }
 ```
-- <mark style="background-color: lightblue">bus</mark> - объект класса I2C, возвращаемый диспетчером I2C шин - [I2Cbus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md);
-- <mark style="background-color: lightblue">address</mark> - адрес датчика на шине;
-- <mark style="background-color: lightblue">repeatability</mark> - повторяемость датчика (см. документацию на датчик);
 </div>
 
 ### Поля
@@ -79,52 +74,16 @@ const _opts = {
 
 Пример кода для вывода данных раз в одну секунду:
 ```js
-//Подключение необходимых модулей
-const ClassI2CBus = require("ClassI2CBus.min.js");
-const err = require("ModuleAppError.min.js");
-const NumIs = require("ModuleAppMath.min.js");
-     NumIs.is();
-const Sht = require("ClassSHT31.min.js");
+let meteo = H.DeviceManager.Service.CreateDevice('MeteoSHT');
 
-//Создание I2C шины
-let I2Cbus = new ClassI2CBus();
-let _bus = I2Cbus.AddBus({sda: P5, scl: P4, bitrate: 100000}).IDbus;
+// Запускаем опрос 
+meteo.Start();
 
-//Настройка передаваемых объектов
-let opts = {bus: _bus, address: 0x44, repeatability: 'LOW', quantityChannel: 2};
-let sensor_props = {
-    name: "SHT31",
-    type: "sensor",
-    channelNames: ['temperature', 'humidity'],
-    typeInSignal: "analog",
-    typeOutSignal: "digital",
-    quantityChannel: 2,
-    busType: [ "i2c" ],
-    manufacturingData: {
-        IDManufacturing: [
-            {
-                "ModuleSD": "32-016"
-            }
-        ],
-        IDsupplier: [
-            {
-                "MSD_Suppl": "B01"
-            }
-        ],
-        HelpSens: "SHT31 Meteo sensor"
-    }
-};
-//Создание объекта класса
-let meteo = new Sht(opts, sensor_props);
+const ch0 = meteo.[0];
+const ch1 = meteo.GetChannel[1];
 
-//Создание каналов
-const ch0 = meteo.GetChannel(0);
-const ch1 = meteo.GetChannel(1);
-ch0.Start(1000);
-ch1.Start(1000);
-
-setInterval(() => {
-  console.log(`Temperature: ${(ch0.Value).toFixed(2)} C    Humidity: ${(ch1.Value).toFixed(2)} %`);
+let interval = setInterval(() => {
+    H.Logger.Service.Log({service: 'GL5528', level: 'I', msg: `Temperature: ${(ch0.Value).toFixed(2)} C    Humidity: ${(ch1.Value).toFixed(2)} %`});
 }, 1000);
 ```
 Вывод данных в консоль:
@@ -135,13 +94,11 @@ setInterval(() => {
 Пример перевода полученной температуры с *ch0* в Кельвины:
 ```js
 ...
-let meteo = new Sht(opts, sensor_props);
+let k = H.DeviceManager.Service.CreateDevice('MeteoSHT')[1];
 
-const ch0 = meteo.GetChannel(0);
+k.Start();
 
-ch0.Start(1000);
-
-console.log((ch0.Value + 273.15) + "K");
+console.log((k.Value + 273.15) + "K");
 ```
 </div>
 
