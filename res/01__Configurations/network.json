@@ -1,0 +1,43 @@
+{
+	"wifi" : {
+		"useWifi" : 0,
+		"bus" : {
+			"index" : "Serial3",
+			"baudrate" : 115200
+		},
+		"scan": 0,
+		"accpoints": [
+			{
+				"ssid":"hubc445",
+				"pass":"ChangeMe123"
+			},
+			{
+				"ssid":"aaaaaa",
+				"pass":"password"
+			}
+		],
+		"usestatic": 0,
+		"staticconf": {
+			"ip": "192.168.50.159",
+			"gw": "192.168.50.251",
+			"nm": "255.255.255.0"
+		}
+	},
+	"eth" : {
+		"useEth" : 0,
+		"bus" : {
+			"index" : "SPI2",
+			"mosi" : "B15",
+			"miso" : "B14",
+			"sck" : "B13",
+			"cs" : "C8",
+			"baudrate" : 3200000
+		},
+		"usestatic": 0,
+		"staticconf": {
+			"ip": "192.168.51.33",
+			"gw": "192.168.51.251",
+			"nm": "255.255.255.0"
+		}
+	}
+}

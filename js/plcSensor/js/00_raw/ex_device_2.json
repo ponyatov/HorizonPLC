@@ -1,0 +1,16 @@
+{
+    "default": {
+        "vl": {
+            "bus": "I2C10",
+            "name": "VL6180",
+            "article": "02-501-0102-201-0004",
+            "type": "sensor",
+            "channelNames": [
+                "light",
+                "range"
+            ],
+            "quantityChannel": 2,
+            "modules": ["plcVL6180.min.js"]
+        }
+    }
+}
