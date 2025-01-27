@@ -1,8 +1,0 @@
-[submodule "Espruino"]
-	path = Espruino
-	url = https://github.com/ponyatov/Espruino.git
-	branch = horizon
-[submodule "doc"]
-	path = doc
-	url = git@github.com:ponyatov/plc_doc.git
-	branch = dev
